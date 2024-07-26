@@ -27,12 +27,11 @@ type AppContextContainerProps = {
   inputRef: React.RefObject<HTMLInputElement>;
   tempTodo: Todo | null;
   todos: Todo[] | null;
+  ckickEsc: (id: number, prevTitle: string) => void;
   changeTitle: (id: number, value: string) => void;
+  changeEdited: (todo: Todo) => void;
   deleteCompleted: () => Promise<void>;
-  switchTodoCompleted: (
-    todo: Todo,
-    setLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  ) => void;
+  switchTodoCompleted: (todo: Todo) => void;
   toggleAllActive: () => void;
   toggleAllCompleted: () => void;
   switchEdited: (todo: Todo) => void;
@@ -86,13 +85,15 @@ export const AppContext = ({ children }: Props) => {
       title: value.trim(),
       completed: false,
       userId: USER_ID,
+      isEdited: false,
+      loaded: true,
     });
 
     return postTodo(value.trim())
       .then(data => {
         setTodos(prev => {
           if (prev) {
-            return [...prev, data];
+            return [...prev, { ...data, loaded: false, isEdited: false }];
           }
 
           return prev;
@@ -115,6 +116,20 @@ export const AppContext = ({ children }: Props) => {
   };
 
   const dltTodo = async (id: number) => {
+    setTodos(prev => {
+      if (prev) {
+        return prev.map(el => {
+          if (el.id == id) {
+            return { ...el, loaded: true };
+          }
+
+          return el;
+        });
+      }
+
+      return prev;
+    });
+
     try {
       await deleteTodo(id);
       setTodos(prev => {
@@ -124,6 +139,7 @@ export const AppContext = ({ children }: Props) => {
 
         return prev;
       });
+      inputRef.current?.focus();
     } catch {
       return setError(`Unable to delete a todo`);
     }
@@ -131,6 +147,21 @@ export const AppContext = ({ children }: Props) => {
 
   const deleteCompleted = async () => {
     const completedTodo = todos?.filter(todo => todo.completed);
+
+    setTodos(prev => {
+      if (prev) {
+        return prev.map(todo => {
+          if (todo.completed) {
+            return { ...todo, loaded: true };
+          }
+
+          return todo;
+        });
+      }
+
+      return prev;
+    });
+
     const deletePromises = completedTodo?.map(todo =>
       deleteTodo(todo.id)
         .then(() => ({ status: 'fulfilled', id: todo.id }))
@@ -159,20 +190,33 @@ export const AppContext = ({ children }: Props) => {
 
         return prev;
       });
+
+      inputRef.current?.focus();
     }
   };
 
-  const switchTodoCompleted = (
-    todo: Todo,
-    setLoading: React.Dispatch<React.SetStateAction<boolean>>,
-  ) => {
+  const switchTodoCompleted = (todo: Todo) => {
+    setTodos(prev => {
+      if (prev) {
+        return prev.map(el => {
+          if (el.id == todo.id) {
+            return { ...el, loaded: true };
+          }
+
+          return el;
+        });
+      }
+
+      return prev;
+    });
+
     editTodoCheck(todo.id, !todo.completed)
       .then(() => {
         setTodos(prev => {
           if (prev) {
             return prev.map(el => {
-              if (el.id == todo.id) {
-                return { ...el, completed: !el.completed };
+              if (el.id === todo.id) {
+                return { ...el, completed: !todo.completed, loaded: false };
               }
 
               return el;
@@ -181,19 +225,51 @@ export const AppContext = ({ children }: Props) => {
 
           return prev;
         });
-        setLoading(false);
       })
-      .catch(() => setError(`Unable to update a todo`));
+      .catch(() => {
+        setError(`Unable to update a todo`);
+        setTodos(prev => {
+          if (prev) {
+            return prev.map(el => {
+              if (el.id === todo.id) {
+                return { ...el, loaded: false };
+              }
+
+              return el;
+            });
+          }
+
+          return prev;
+        });
+      });
   };
 
   const toggleAllCompleted = () => {
+    setTodos(prev => {
+      if (prev) {
+        return prev.map(todo => {
+          if (todo) {
+            return { ...todo, loaded: true };
+          }
+
+          return todo;
+        });
+      }
+
+      return prev;
+    });
+
     if (todos) {
       todos.map(todo => {
         editTodoCheck(todo.id, true)
           .then(() => {
             setTodos(prev => {
               if (prev) {
-                return prev.map(el => ({ ...el, completed: true }));
+                return prev.map(el => ({
+                  ...el,
+                  completed: true,
+                  loaded: false,
+                }));
               }
 
               return prev;
@@ -205,13 +281,31 @@ export const AppContext = ({ children }: Props) => {
   };
 
   const toggleAllActive = () => {
+    setTodos(prev => {
+      if (prev) {
+        return prev.map(todo => {
+          if (todo) {
+            return { ...todo, loaded: true };
+          }
+
+          return todo;
+        });
+      }
+
+      return prev;
+    });
+
     if (todos) {
       todos.map(todo => {
         editTodoCheck(todo.id, false)
           .then(() => {
             setTodos(prev => {
               if (prev) {
-                return prev.map(el => ({ ...el, completed: false }));
+                return prev.map(el => ({
+                  ...el,
+                  completed: false,
+                  loaded: false,
+                }));
               }
 
               return prev;
@@ -239,13 +333,27 @@ export const AppContext = ({ children }: Props) => {
   };
 
   const switchEdited = (todo: Todo) => {
+    setTodos(prev => {
+      if (prev) {
+        return prev.map(swTodo => {
+          if (swTodo.id === todo.id) {
+            return { ...swTodo, loaded: true };
+          }
+
+          return swTodo;
+        });
+      }
+
+      return prev;
+    });
+
     editTodo({ ...todo, title: todo.title.trim() })
       .then(req => {
         setTodos(prev => {
           if (prev) {
             return prev.map(el => {
               if (todo.id === el.id) {
-                return req;
+                return { ...req, loaded: false };
               }
 
               return el;
@@ -258,9 +366,46 @@ export const AppContext = ({ children }: Props) => {
       .catch(() => setError('XXX'));
   };
 
+  const changeEdited = (todo: Todo) => {
+    setTodos(prev => {
+      if (prev) {
+        return prev.map(edTodo => {
+          if (edTodo.id === todo.id) {
+            return { ...edTodo, isEdited: true };
+          }
+
+          return edTodo;
+        });
+      }
+
+      return prev;
+    });
+  };
+
+  const ckickEsc = (id: number, prevTitle: string) => {
+    setTodos(prev => {
+      if (prev) {
+        return prev.map(el => {
+          if (id === el.id) {
+            return { ...el, title: prevTitle, isEdited: false };
+          }
+
+          return el;
+        });
+      }
+
+      return prev;
+    });
+  };
+
   useEffect(() => {
+    inputRef.current?.focus();
     getTodos()
-      .then(data => setTodos(data))
+      .then(data =>
+        setTodos(
+          data.map(todo => ({ ...todo, isEdited: false, loaded: false })),
+        ),
+      )
       .catch(() => setError(`Unable to load todos`));
   }, []);
 
@@ -271,10 +416,6 @@ export const AppContext = ({ children }: Props) => {
       }, 3000);
     }
   }, [error]);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, [todos, error]);
 
   return (
     <AppContextContainer.Provider
@@ -288,6 +429,8 @@ export const AppContext = ({ children }: Props) => {
         changeFilterType,
         inputRef,
         todos,
+        ckickEsc,
+        changeEdited,
         changeTitle,
         deleteCompleted,
         switchTodoCompleted,

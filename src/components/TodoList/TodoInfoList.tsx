@@ -9,27 +9,29 @@ type Props = {
 };
 
 const TodoListInfo = ({ todo }: Props) => {
-  const { dltTodo, switchTodoCompleted, inputRef, changeTitle, switchEdited } =
-    useAppContextContainer();
-  const { completed, title, id } = todo;
-  const [loadingTodoId, setLoadingTodoId] = useState<boolean>(false);
-  const [isEdited, setIsEdited] = useState<boolean>(false);
-  const [pastTitle, setPastTitle] = useState<string>('');
-
-  console.log(isEdited);
+  const {
+    dltTodo,
+    switchTodoCompleted,
+    inputRef,
+    changeTitle,
+    switchEdited,
+    changeEdited,
+    ckickEsc,
+  } = useAppContextContainer();
+  const { completed, title, id, loaded, isEdited } = todo;
+  const [prevTitle, setPrevTitle] = useState<string>('');
 
   const handleDoubleclickEdited = () => {
-    setIsEdited(true);
+    setPrevTitle(title);
+    changeEdited(todo);
   };
 
   const handleClickDeleteTodo = (todoId: number) => {
-    setLoadingTodoId(true);
     dltTodo(todoId);
   };
 
   const handleClickSwitch = (change: Todo) => {
-    setLoadingTodoId(true);
-    switchTodoCompleted(change, setLoadingTodoId);
+    switchTodoCompleted(change);
   };
 
   const handleBlurSwitch = () => {
@@ -39,7 +41,7 @@ const TodoListInfo = ({ todo }: Props) => {
       return dltTodo(id);
     }
 
-    setIsEdited(false);
+    switchEdited(todo);
   };
 
   const handleChangeTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +57,13 @@ const TodoListInfo = ({ todo }: Props) => {
       return dltTodo(id);
     }
 
-    return switchEdited(todo);
+    switchEdited(todo);
+  };
+
+  const handlekeyUpClickEsc = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === `Escape`) {
+      ckickEsc(id, prevTitle);
+    }
   };
 
   return (
@@ -74,7 +82,7 @@ const TodoListInfo = ({ todo }: Props) => {
       </label>
 
       {isEdited ? (
-        <form onSubmit={handleSubmitNewTitle}>
+        <form onSubmit={handleSubmitNewTitle} onKeyUp={handlekeyUpClickEsc}>
           <input
             data-cy="TodoTitleField"
             type="text"
@@ -110,7 +118,7 @@ const TodoListInfo = ({ todo }: Props) => {
       <div
         data-cy="TodoLoader"
         className={classNames('modal', 'overlay', {
-          'is-active': loadingTodoId,
+          'is-active': loaded,
         })}
       >
         <div className="modal-background has-background-white-ter" />
@@ -121,30 +129,3 @@ const TodoListInfo = ({ todo }: Props) => {
 };
 
 export default TodoListInfo;
-
-// {/* This todo is being edited */}
-// <div data-cy="Todo" className="todo">
-//   <label className="todo__status-label">
-//     <input
-//       data-cy="TodoStatus"
-//       type="checkbox"
-//       className="todo__status"
-//     />
-//   </label>
-
-//   {/* This form is shown instead of the title and remove button */}
-//   <form>
-//     <input
-//       data-cy="TodoTitleField"
-//       type="text"
-//       className="todo__title-field"
-//       placeholder="Empty todo will be deleted"
-//       value="Todo is being edited now"
-//     />
-//   </form>
-
-//   <div data-cy="TodoLoader" className="modal overlay">
-//     <div className="modal-background has-background-white-ter" />
-//     <div className="loader" />
-//   </div>
-// </div>

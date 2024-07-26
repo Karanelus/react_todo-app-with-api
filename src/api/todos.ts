@@ -19,8 +19,13 @@ export const deleteTodo = (id: number) => {
   return client.delete(`/todos/${id}`);
 };
 
-export const editTodo = ({ id, completed, title }: Todo) => {
-  return client.patch<Todo>(`/todos/${id}`, { completed, title });
+export const editTodo = ({ id, completed, title, isEdited, loaded }: Todo) => {
+  return client.patch<Todo>(`/todos/${id}`, {
+    completed,
+    title,
+    isEdited,
+    loaded,
+  });
 };
 
 export const editTodoCheck = (id: number, completed: boolean) => {

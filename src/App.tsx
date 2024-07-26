@@ -4,7 +4,7 @@
 import React from 'react';
 import { UserWarning } from './UserWarning';
 import { USER_ID } from './api/todos';
-import TodoList from './components/TodoInfo/TodoList';
+import TodoList from './components/TodoList/TodoList';
 import TodoFooter from './components/Footer/TodoFooter';
 import TodoError from './components/Error/TodoError';
 import { SortType } from './enums/SortType';
@@ -35,11 +35,8 @@ export const App: React.FC = () => {
       <div className="todoapp__content">
         <TodoHeader />
         {filteredTodos && <TodoList todos={filteredTodos} />}
-        {/* Hide the footer if there are no todos */}
         {todos && !!todos.length && <TodoFooter />}
       </div>
-      {/* DON'T use conditional rendering to hide the notification */}
-      {/* Add the 'hidden' class to hide the message smoothly */}
       <TodoError error={error} />
     </div>
   );
