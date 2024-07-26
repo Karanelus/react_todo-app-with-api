@@ -35,7 +35,6 @@ const TodoHeader = () => {
 
   return (
     <header className="todoapp__header">
-      {/* this button should have `active` class only if all todos are completed */}
       {!!todos?.length && (
         <button
           type="button"
@@ -47,7 +46,6 @@ const TodoHeader = () => {
         />
       )}
 
-      {/* Add a todo on form submit */}
       <form onSubmit={handleSubmitNewTodo}>
         <input
           ref={inputRef}

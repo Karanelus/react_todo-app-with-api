@@ -2,7 +2,7 @@ import classNames from 'classnames';
 import { useAppContextContainer } from '../../context/AppContext';
 
 type Props = {
-  error: string | null;
+  error: string;
 };
 
 const TodoError = ({ error }: Props) => {
@@ -16,7 +16,7 @@ const TodoError = ({ error }: Props) => {
         'is-danger',
         'is-light',
         'has-text-weight-normal',
-        { hidden: error === null },
+        { hidden: !error.length },
       )}
     >
       <button

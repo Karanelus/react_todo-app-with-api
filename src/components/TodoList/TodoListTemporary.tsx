@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable jsx-a11y/label-has-associated-control */
 import classNames from 'classnames';
 import { useAppContextContainer } from '../../context/AppContext';
 
-/* eslint-disable jsx-a11y/label-has-associated-control */
 const TodoListTemporary = () => {
   const { tempTodo, dltTodo } = useAppContextContainer();
   const { completed, id, title } = tempTodo!;

@@ -20,7 +20,7 @@ import {
 type AppContextContainerProps = {
   addTodo: (value: string) => void;
   dltTodo: (id: number) => void;
-  error: string | null;
+  error: string;
   handleClickCloseError: () => void;
   filterType: SortType;
   changeFilterType: (newType: SortType) => void;
@@ -61,13 +61,13 @@ export const AppContext = ({ children }: Props) => {
   const [todos, setTodos] = useState<Todo[] | null>(null);
   const [tempTodo, setTempTodo] = useState<Todo | null>(null);
   const [filterType, setFilterType] = useState<SortType>(SortType.ALL);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
   const [queryText, setQueryText] = useState<string>('');
 
   const changeFilterType = (newType: SortType) => setFilterType(newType);
 
-  const handleClickCloseError = () => setError(null);
+  const handleClickCloseError = () => setError('');
 
   const handleChangeQueryText = (text: string) => setQueryText(text);
 
@@ -410,9 +410,9 @@ export const AppContext = ({ children }: Props) => {
   }, []);
 
   useEffect(() => {
-    if (error !== null) {
+    if (error.length) {
       setTimeout(() => {
-        setError(null);
+        setError('');
       }, 3000);
     }
   }, [error]);
